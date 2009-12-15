@@ -1,0 +1,63 @@
+<?php
+
+function blocked_menu_alter(&$items) {
+    $items['user/%user_uid_optional']['page callback'] = 'blocked_user_view';
+    $items['user/%user_uid_optional']['access callback'] = 'blocked_user_view_access';
+    $items['user/%user/contact']['access callback'] = 'blocked_user_contact_access';
+}
+
+function blocked_user_view_access($account) {
+  return $account && $account->uid &&
+    (
+      // Always let users view their own profile.
+      ($GLOBALS['user']->uid == $account->uid) ||
+      // Administrators can view all accounts.
+      user_access('administer users') ||
+      // The user is not blocked and logged in at least once.
+      ($account->access && user_access('access user profiles'))
+    );
+    
+}
+
+function blocked_user_contact_access($account) {
+  global $user;
+  if (!isset($account->contact) || !$account->status) {
+    $account->contact = FALSE;
+  }
+  return
+    user_access('use personal contact tab') && $account && $user->uid &&
+    (
+      ($user->uid != $account->uid && $account->contact) ||
+      user_access('administer users')
+    );
+}
+define('BLOCKED_USER_PAGE','!username is no longer a member.');
+
+function blocked_user_view($account) {
+  if ($account->status) return user_view($account) ;
+  else return t(variable_get('blocked_blocked_user_page',BLOCKED_USER_PAGE),
+    array('!username'=>$account->name));
+}
+
+function blocked_perm() {
+    return array('use personal contact tab');
+}
+
+function blocked_form_user_admin_settings_alter(&$form, $form_state) {
+
+    $form['blocked'] = array(
+        '#type'=> 'fieldset',
+    );
+    $form['blocked']['blocked_blocked_user_page'] = array(
+        '#type'=>'textarea',
+        '#title'=> "Blocked user's profile page message",
+        '#default_value'=> variable_get('blocked_blocked_user_page',BLOCKED_USER_PAGE),
+    );
+    $form['buttons']['#weight'] = 1; 
+}
+
+function blocked_form_user_profile_form_alter(&$form, $form_state) {
+
+    $form['contact']['contact']['#description'] = t('Allow other users to contact you via a personal contact form which keeps your e-mail address hidden. Note that some privileged users such as site administrators are still able to contact you even if you choose to disable this feature.');
+    
+}

@@ -1,0 +1,3 @@
+name = Blocked fixes
+description = Fixes some issues involving blocked users as well as contact module
+core = 6.x
