@@ -1,7 +1,9 @@
 <?php
 
 function blocked_menu_alter(&$items) {
-    $items['user/%user_uid_optional']['page callback'] = 'blocked_user_view';
+    if (trim(variable_get("blocked_blocked_user_page",BLOCKED_USER_PAGE))) {
+     $items['user/%user_uid_optional']['page callback'] = 'blocked_user_view';
+    }
     $items['user/%user_uid_optional']['access callback'] = 'blocked_user_view_access';
     $items['user/%user/contact']['access callback'] = 'blocked_user_contact_access';
 }
